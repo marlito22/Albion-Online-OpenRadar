@@ -2,7 +2,7 @@
 
 How OpenRadar detects portals, feu follets (wisp signs), and wisp cages in the Mists biome.
 
-*Last verified against code: 2026-09-25. Codes are post 2026-06-29 patch, which shifted everything at or above 248 by +2.*
+*Last verified against code: 2026-11-01. Codes are post 2026-10-12 patch, which removed one event after NewMob and moved every code at or above 124 down by 1.*
 
 ## Detection surface
 
@@ -49,11 +49,11 @@ The image is `mist_<enchant>.webp`. The drawing reuses the portal asset rather t
 | `Parameters[0]` | entity id |
 | `Parameters[2]` | `[x, y]` position |
 | `Parameters[4]` | cage name string (e.g. `SHARED_FILL_CAGE_WISP_MOR_A`) |
-| `Parameters[5]` | int (1 on every live cage observed) |
+| `Parameters[5]` | cage state: 1 closed, 2 open, 0 seen on a smuggler cage |
 
 The pre-patch `Parameters[1]` scalar is no longer present.
 
-`Parameters[5]==2` may indicate an "already freed" cage that should be skipped at handler time. The current handler does not implement this check; it remains an open observation pending a Mists capture with both live and freed cages. Reference: deatheye-2pc treats `Parameters[5]=="2"` as a guard.
+A cage announced with `Parameters[5]==2` is already open and cannot be used: the handler skips it, and removes a known cage announced again as open. `CagedObjectStateUpdated` carries the same state at `Parameters[1]`; the 2026-11-01 capture shows a cage spawned with 1, then `CagedObjectStateUpdated` with 2 when it was opened.
 
 ## Mists instance map identifier
 
@@ -70,16 +70,16 @@ When a player enters the Mists, the cluster id arrives via `Event 521 MistsPlaye
 | Code | Symbol | Status |
 |---|---|---|
 | 123 | NewMob | Routed. Mob spawns; a portal wisp carries its `MISTS_*` tag at `Parameters[33]` since Dragonfire, its enchant at `[34]`. |
-| 533 | NewCagedObject | Routed. Wisp cages. |
-| 534 | CagedObjectStateUpdated | Routed. Cage opened. |
-| 522 | MistsPlayerJoinedInfo | Routed. Mists entry signal; applies the map change with origin cluster. |
-| 521 | NewMistsImmediateReturnExit | Not routed. Mists exit signal. |
-| 523 | NewMistsStaticEntrance | Not routed. |
-| 532 | MistsEntranceDataChanged | Not routed. |
-| 526 | NewMistsWispSpawn | Not routed. Initial design assumed this carried feu follets; runtime evidence (re-confirmed post-patch on 2026-07-05, feu follets detected live via NewMob name) shows otherwise. Payload observed x22 in the 2026-07-05 Mists capture: `Parameters[0]` id, `Parameters[1]` `[x, y]`, `Parameters[2]` in {90, 180, 270} (likely an orientation), no rarity field. Out of scope until live evidence clarifies its semantics. |
+| 532 | NewCagedObject | Routed. Wisp cages. |
+| 533 | CagedObjectStateUpdated | Routed. Cage opened. |
+| 521 | MistsPlayerJoinedInfo | Routed. Mists entry signal; applies the map change with origin cluster. |
+| 520 | NewMistsImmediateReturnExit | Not routed. Mists exit signal. |
+| 522 | NewMistsStaticEntrance | Not routed. |
+| 531 | MistsEntranceDataChanged | Not routed. |
+| 525 | NewMistsWispSpawn | Not routed. Initial design assumed this carried feu follets; runtime evidence (re-confirmed post-patch on 2026-07-05, feu follets detected live via NewMob name) shows otherwise. Payload observed x22 in the 2026-07-05 Mists capture: `Parameters[0]` id, `Parameters[1]` `[x, y]`, `Parameters[2]` in {90, 180, 270} (likely an orientation), no rarity field. Out of scope until live evidence clarifies its semantics. |
 
 ## Open observations
 
 - Mists rarity at the cluster level (instance-wide, before portals appear) lives in the `ChangeCluster` operation response `Parameters[3]` byte array, last byte. Reaching it requires plumbing a Mists-zone capture with opcode 41 response into a fixture and a cluster-level rarity store.
-- Events 521/523/526/532 are received but not consumed. A follow-up PR should route them into a Mists state surface readable by drawings.
+- Events 520/522/525/531 are received but not consumed. A follow-up PR should route them into a Mists state surface readable by drawings.
 - Portal rarity arrives at `Parameters[34]` since Dragonfire; the 2026-09-03 capture carries a duo portal (`MISTS_DUO_BLACK`) with value 2. The 0 to 4 map reads 2 as Rare, while that portal was noted as Uncommon. No capture pairs a value with the rarity shown in game, so the map is unconfirmed.
