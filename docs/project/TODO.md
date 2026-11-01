@@ -1,7 +1,7 @@
 # OpenRadar Roadmap
 
-**Last release**: 2.2.2
-**Last update**: 2026-10-08
+**Last release**: 2.3.0
+**Last update**: 2026-11-01
 
 ## Detection systems status
 
@@ -105,9 +105,6 @@ Findings from PR cycles that need pcap-backed investigation before anyone can fi
   the arrival init.
 - **`/api/settings/server-logs`**. Replaced by `/api/settings/logging` in 2.2. The old path returns 404 with no
   compatibility shim. Noted in case an old bug report mentions it.
-- **`npm run lint` crashes on every `.gohtml` file**. ESLint 10.11 with `eslint-plugin-html` 8.2 throws
-  `Cannot read private member #ruleDefinitions` while linting any template, unrelated to file content. Reproduces on
-  an untouched file. `npx eslint web/scripts/` alone still works.
 - **Dead PiP resize listener**. `PictureInPictureManager.js` listens for `canvasSizeChanged` on `document`, while
   `RadarSettingsPanel.js` dispatches it on `window`. Harmless because `compositeFrame` resyncs the size every frame.
   Delete the listener.
@@ -144,7 +141,6 @@ Findings from PR cycles that need pcap-backed investigation before anyone can fi
   `MISTS_DUNGEON` tag to `mistsDungeonHandler.addPortal`.
 - **A missing saved adapter is not listed**. `GET /api/network/interfaces` builds its rows from the interfaces present
   now, so an adapter saved in `network.json` that is gone disappears instead of showing as unavailable.
-- **Release line at the top of this file is stale**. It says 2.2.2; the latest release is 2.2.3.
 - **Page container wrapper is duplicated**. `base.gohtml` and `content.gohtml` each carry the same
   `container mx-auto animate-in` div and page switch, so a change has to land in both.
 - **DaisyUI version differs between release and local builds**. `package-lock.json` pins 5.7.16, which `npm ci` and
